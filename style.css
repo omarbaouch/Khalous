@@ -535,6 +535,20 @@ a, a:hover { text-decoration: none; }
     align-items: center;
 }
 
+
+
+.brandLogo img {
+    width: 40px;
+    height: 40px;
+    color: var(--black400);
+    opacity: 0.6;
+    transition: all 0.3s;
+}
+
+.brandLogo:hover img {
+    opacity: 1;
+    transform: translateY(-5px);
+}
 .brandLogo svg {
     width: 40px;
     height: 40px;
