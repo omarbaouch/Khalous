@@ -28,10 +28,10 @@ $(document).ready(function() {
         $(".navbar-collapse").removeClass("show");
     });
 
-    // Animation de l'overlay d'intro
+    // Animation améliorée de l'overlay d'intro
     setTimeout(function() {
-        $(".intro-overlay").fadeOut(500);
-    }, 2500);
+        $(".intro-overlay").fadeOut(800);
+    }, 3000);
 
     // Navigation active lors du scroll
     $(window).scroll(function() {
@@ -89,13 +89,15 @@ $(document).ready(function() {
 
     // Déclencher l'animation des statistiques quand la section devient visible
     $(window).on('scroll', function() {
-        var statsOffset = $('.about-stats').offset().top;
-        var windowHeight = $(window).height();
-        var windowScroll = $(this).scrollTop();
-
-        if (windowScroll + windowHeight > statsOffset + 100) {
-            animateStats();
-            $(window).off('scroll'); // Ne déclencher qu'une seule fois
+        var statsOffset = $('.about-stats').offset();
+        if (statsOffset) {
+            var windowHeight = $(window).height();
+            var windowScroll = $(this).scrollTop();
+    
+            if (windowScroll + windowHeight > statsOffset.top + 100) {
+                animateStats();
+                $(window).off('scroll'); // Ne déclencher qu'une seule fois
+            }
         }
     });
 
@@ -109,8 +111,10 @@ $(document).ready(function() {
         }
     );
 
-    // Animation des logos dans la section brands
-    $('.container .brandsCarousel').hover(
+    // Animation des logos dans la section brands - Amélioré pour préserver les proportions
+    $('.carouselTrack').css('animation-play-state', 'running');
+    
+    $('.brandsCarousel').hover(
         function() {
             $('.carouselTrack').css('animation-play-state', 'paused');
         },
@@ -118,6 +122,31 @@ $(document).ready(function() {
             $('.carouselTrack').css('animation-play-state', 'running');
         }
     );
+
+    // Chargement correct des images du carousel
+    $('.brandLogo img').each(function() {
+        var img = $(this);
+        
+        // Préchargement des images pour maintenir les proportions
+        if (img.attr('src')) {
+            var tempImg = new Image();
+            tempImg.onload = function() {
+                // Assurer que les images gardent leur ratio
+                img.css({
+                    'max-width': '100%',
+                    'max-height': '100%',
+                    'object-fit': 'contain'
+                });
+            };
+            tempImg.src = img.attr('src');
+        }
+        
+        // Pour les images avec data-src (lazy loading)
+        if (img.attr('data-src')) {
+            img.attr('src', img.attr('data-src'));
+            img.removeAttr('data-src');
+        }
+    });
 
     // Gestion du slider de projets
     var currentSlide = 0;
@@ -272,4 +301,41 @@ $(document).ready(function() {
             topOffset: -100
         });
     }
+    
+    // Gestion d'erreurs potentielles avec les images
+    $('img').on('error', function() {
+        $(this).attr('src', 'placeholder.svg'); // Remplacer par une image par défaut
+    });
+    
+    // Optimiser le chargement des images
+    function lazyLoadImages() {
+        const images = document.querySelectorAll('img[data-src]');
+        const options = {
+            threshold: 0.1,
+            rootMargin: '0px 0px 200px 0px'
+        };
+        
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const image = entry.target;
+                        image.src = image.dataset.src;
+                        image.onload = () => image.removeAttribute('data-src');
+                        imageObserver.unobserve(image);
+                    }
+                });
+            }, options);
+            
+            images.forEach(img => imageObserver.observe(img));
+        } else {
+            // Fallback pour les navigateurs qui ne supportent pas IntersectionObserver
+            images.forEach(img => {
+                img.src = img.dataset.src;
+                img.onload = () => img.removeAttribute('data-src');
+            });
+        }
+    }
+    
+    lazyLoadImages();
 });
